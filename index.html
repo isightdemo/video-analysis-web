@@ -10,6 +10,8 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background-color 0.3s ease;
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
         }
         [data-bs-theme="dark"] body {
             background-color: #212529;
@@ -27,6 +29,8 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: background-color 0.3s ease;
+            background-color: var(--bs-card-bg);
+            border: 1px solid var(--bs-border-color);
         }
         [data-bs-theme="dark"] .card {
             background-color: #2c3034;
@@ -238,6 +242,10 @@
         htmlElement.setAttribute('data-bs-theme', savedTheme);
         updateThemeIcon(savedTheme);
 
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+        }
+
         themeToggle.addEventListener('click', () => {
             const currentTheme = htmlElement.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -245,11 +253,10 @@
             htmlElement.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
+            
+            // Force a reflow to ensure styles are applied
+            document.body.offsetHeight;
         });
-
-        function updateThemeIcon(theme) {
-            themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
-        }
 
         // Configuration
         const API_BASE_URL = 'http://68.147.18.202:28392'; // Server URL
