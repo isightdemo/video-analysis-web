@@ -286,9 +286,9 @@
         });
 
         // Configuration
-        const CORS_PROXY = 'https://cors.sh/';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
         const API_BASE_URL = window.location.protocol === 'https:' 
-            ? CORS_PROXY + 'http://142.170.89.97:32015'  // Use CORS proxy for HTTPS
+            ? CORS_PROXY + encodeURIComponent('http://142.170.89.97:32015')  // Use CORS proxy for HTTPS
             : 'http://142.170.89.97:32015';  // Direct HTTP for local development
 
         // Check backend connection
@@ -300,8 +300,7 @@
                     mode: 'cors',
                     credentials: 'omit',
                     headers: {
-                        'Accept': 'application/json',
-                        'x-cors-api-key': 'temp_9a0755b0e9b8c4d3a2b1c0d9e8f7a6b5'  // This is a temporary key
+                        'Accept': 'application/json'
                     }
                 });
                 
@@ -411,42 +410,64 @@
             resultDiv.innerHTML = '';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/process-video`, {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'cors',
-                    credentials: 'omit',
-                    headers: {
-                        'Accept': 'application/json',
-                        'x-cors-api-key': 'temp_9a0755b0e9b8c4d3a2b1c0d9e8f7a6b5'  // This is a temporary key
+                // For file uploads, we need to use a different approach
+                const file = videoInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    try {
+                        const base64Data = e.target.result.split(',')[1];
+                        const response = await fetch(`${API_BASE_URL}/process-video`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                video: base64Data,
+                                input_type: type === 'accident' ? 'Accident' : 'Construction'
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.status === 'success') {
+                            const table = document.createElement('table');
+                            table.className = 'table table-striped';
+                            
+                            let tableHTML = '<thead><tr><th>Question</th><th>Answer</th></tr></thead><tbody>';
+                            for (let i = 0; i < data.data.Questions.length; i++) {
+                                tableHTML += `<tr><td>${data.data.Questions[i]}</td><td>${data.data.Answers[i]}</td></tr>`;
+                            }
+                            tableHTML += '</tbody>';
+                            
+                            table.innerHTML = tableHTML;
+                            resultDiv.appendChild(table);
+                        } else {
+                            resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                        }
+                    } catch (error) {
+                        console.error('Error processing video:', error);
+                        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                    } finally {
+                        loadingDiv.style.display = 'none';
                     }
-                });
+                };
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                reader.onerror = function(error) {
+                    console.error('Error reading file:', error);
+                    resultDiv.innerHTML = `<div class="alert alert-danger">Error reading file: ${error.message}</div>`;
+                    loadingDiv.style.display = 'none';
+                };
 
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    const table = document.createElement('table');
-                    table.className = 'table table-striped';
-                    
-                    let tableHTML = '<thead><tr><th>Question</th><th>Answer</th></tr></thead><tbody>';
-                    for (let i = 0; i < data.data.Questions.length; i++) {
-                        tableHTML += `<tr><td>${data.data.Questions[i]}</td><td>${data.data.Answers[i]}</td></tr>`;
-                    }
-                    tableHTML += '</tbody>';
-                    
-                    table.innerHTML = tableHTML;
-                    resultDiv.appendChild(table);
-                } else {
-                    resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-                }
+                reader.readAsDataURL(file);
             } catch (error) {
                 console.error('Error processing video:', error);
                 resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
-            } finally {
                 loadingDiv.style.display = 'none';
             }
         }
