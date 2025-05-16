@@ -286,9 +286,9 @@
         });
 
         // Configuration
-        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
         const API_BASE_URL = window.location.protocol === 'https:' 
-            ? CORS_PROXY + 'http://142.170.89.97:32015'  // Use CORS proxy for HTTPS
+            ? CORS_PROXY + encodeURIComponent('http://142.170.89.97:32015')  // Use CORS proxy for HTTPS
             : 'http://142.170.89.97:32015';  // Direct HTTP for local development
 
         // Check backend connection
@@ -299,8 +299,7 @@
                     mode: 'cors',
                     credentials: 'omit',
                     headers: {
-                        'Accept': 'application/json',
-                        'Origin': window.location.origin
+                        'Accept': 'application/json'
                     }
                 });
                 
@@ -414,7 +413,10 @@
                     method: 'POST',
                     body: formData,
                     mode: 'cors',
-                    credentials: 'omit'
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 });
 
                 const data = await response.json();
