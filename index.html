@@ -286,9 +286,10 @@
         });
 
         // Configuration
+        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
         const API_BASE_URL = window.location.protocol === 'https:' 
-            ? 'https://142.170.89.97:32015'  // HTTPS endpoint
-            : 'http://142.170.89.97:32015';  // HTTP endpoint
+            ? CORS_PROXY + 'http://142.170.89.97:32015'  // Use CORS proxy for HTTPS
+            : 'http://142.170.89.97:32015';  // Direct HTTP for local development
 
         // Check backend connection
         async function checkBackendConnection() {
@@ -298,7 +299,8 @@
                     mode: 'cors',
                     credentials: 'omit',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Origin': window.location.origin
                     }
                 });
                 
@@ -317,31 +319,6 @@
                 console.error('Connection error:', error);
                 statusDiv.textContent = 'Backend disconnected';
                 statusDiv.className = 'status-disconnected';
-                
-                // If we're on HTTPS and the connection failed, try HTTP as fallback
-                if (window.location.protocol === 'https:' && API_BASE_URL.startsWith('https:')) {
-                    console.log('Trying HTTP fallback...');
-                    const httpUrl = API_BASE_URL.replace('https:', 'http:');
-                    try {
-                        const fallbackResponse = await fetch(`${httpUrl}/test`, {
-                            mode: 'cors',
-                            credentials: 'omit',
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        });
-                        if (fallbackResponse.ok) {
-                            const fallbackData = await fallbackResponse.json();
-                            if (fallbackData.status === 'success') {
-                                statusDiv.textContent = 'Connected to backend (HTTP)';
-                                statusDiv.className = 'status-connected';
-                                return;
-                            }
-                        }
-                    } catch (fallbackError) {
-                        console.error('Fallback connection failed:', fallbackError);
-                    }
-                }
             }
         }
 
