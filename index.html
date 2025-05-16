@@ -286,9 +286,9 @@
         });
 
         // Configuration
-        const CORS_PROXY = 'https://corsproxy.io/?';
+        const CORS_PROXY = 'https://cors.sh/';
         const API_BASE_URL = window.location.protocol === 'https:' 
-            ? CORS_PROXY + encodeURIComponent('http://142.170.89.97:32015')  // Use CORS proxy for HTTPS
+            ? CORS_PROXY + 'http://142.170.89.97:32015'  // Use CORS proxy for HTTPS
             : 'http://142.170.89.97:32015';  // Direct HTTP for local development
 
         // Check backend connection
@@ -300,7 +300,8 @@
                     mode: 'cors',
                     credentials: 'omit',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'x-cors-api-key': 'temp_9a0755b0e9b8c4d3a2b1c0d9e8f7a6b5'  // This is a temporary key
                     }
                 });
                 
@@ -410,15 +411,14 @@
             resultDiv.innerHTML = '';
 
             try {
-                // For POST requests with files, we need to use the direct URL
-                const directUrl = 'http://142.170.89.97:32015/process-video';
-                const response = await fetch(directUrl, {
+                const response = await fetch(`${API_BASE_URL}/process-video`, {
                     method: 'POST',
                     body: formData,
                     mode: 'cors',
                     credentials: 'omit',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'x-cors-api-key': 'temp_9a0755b0e9b8c4d3a2b1c0d9e8f7a6b5'  // This is a temporary key
                     }
                 });
 
@@ -448,6 +448,26 @@
                 resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
             } finally {
                 loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Add this function to handle CORS preflight
+        async function handleCorsPreflight(url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'OPTIONS',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'content-type'
+                    }
+                });
+                return response.ok;
+            } catch (error) {
+                console.error('CORS preflight failed:', error);
+                return false;
             }
         }
     </script>
