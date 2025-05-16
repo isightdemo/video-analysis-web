@@ -286,7 +286,9 @@
         });
 
         // Configuration
-        const API_BASE_URL = 'http://68.147.18.202:28392'; // Server URL
+        const API_BASE_URL = window.location.protocol === 'https:' 
+            ? 'https://142.170.89.97:32015'  // HTTPS endpoint
+            : 'http://142.170.89.97:32015';  // HTTP endpoint
 
         // Check backend connection
         async function checkBackendConnection() {
@@ -294,8 +296,16 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/test`, {
                     mode: 'cors',
-                    credentials: 'omit'
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 if (data.status === 'success') {
                     statusDiv.textContent = 'Connected to backend';
@@ -304,8 +314,34 @@
                     throw new Error('Backend not responding correctly');
                 }
             } catch (error) {
+                console.error('Connection error:', error);
                 statusDiv.textContent = 'Backend disconnected';
                 statusDiv.className = 'status-disconnected';
+                
+                // If we're on HTTPS and the connection failed, try HTTP as fallback
+                if (window.location.protocol === 'https:' && API_BASE_URL.startsWith('https:')) {
+                    console.log('Trying HTTP fallback...');
+                    const httpUrl = API_BASE_URL.replace('https:', 'http:');
+                    try {
+                        const fallbackResponse = await fetch(`${httpUrl}/test`, {
+                            mode: 'cors',
+                            credentials: 'omit',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json();
+                            if (fallbackData.status === 'success') {
+                                statusDiv.textContent = 'Connected to backend (HTTP)';
+                                statusDiv.className = 'status-connected';
+                                return;
+                            }
+                        }
+                    } catch (fallbackError) {
+                        console.error('Fallback connection failed:', fallbackError);
+                    }
+                }
             }
         }
 
